@@ -1,29 +1,29 @@
 #include <stdlib.h>
 #include "digraph.h"
 
-void init_digraph(struct intnode *digraph[], int size)
+void init_digraph(t_intnode *digraph[], int size)
 {
     for (int i = 0; i < size; ++i) digraph[i] = NULL;
 }
 
-int add_edge(struct intnode *digraph[], int from, int to)
+int add_edge(t_intnode *digraph[], int from, int to)
 {
-    struct intnode *current = digraph[from];
+    t_intnode *current = digraph[from];
     while (current != NULL) {
 	// Return -1 if it's a duplicate edge.
 	if (current->val == to) return -1;
 	current = current->next;
     }
-    struct intnode *new = malloc(sizeof (struct intnode));
+    t_intnode *new = malloc(sizeof (t_intnode));
     new->val = to;
     new->next = digraph[from];
     digraph[from] = new;
     return 0;
 }
 
-int reverse(struct intnode *src[], struct intnode *dest[], int size)
+int reverse(t_intnode *src[], t_intnode *dest[], int size)
 {
-    struct intnode *src_node;
+    t_intnode *src_node;
     for (int i = 0; i < size; ++i) {
 	src_node = src[i];
 	while (src_node != NULL) {
@@ -34,10 +34,23 @@ int reverse(struct intnode *src[], struct intnode *dest[], int size)
     return 0;
 }
 
-void free_nodes(struct intnode *root)
+void dfs(t_intnode *digraph[], int from, int *visited, int *edge_to)
 {
-    struct intnode *current = root;
-    struct intnode *tmp;
+    visited[from] = 1;
+    t_intnode *cur = digraph[from];
+    while (cur != NULL) {
+	if (!visited[cur->val]) {
+	    edge_to[cur->val] = from;
+	    dfs(digraph, cur->val, visited, edge_to);
+	}
+	cur = cur->next;
+    }
+}
+
+void free_nodes(t_intnode *root)
+{
+    t_intnode *current = root;
+    t_intnode *tmp;
     while (current != NULL) {
 	tmp = current->next;
 	free(current);
@@ -45,7 +58,7 @@ void free_nodes(struct intnode *root)
     }
 }
 
-void free_digraph(struct intnode *digraph[], int size)
+void free_digraph(t_intnode *digraph[], int size)
 {
     for (int i = 0; i < size; ++i) free_nodes(digraph[i]);
 }
