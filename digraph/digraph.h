@@ -6,16 +6,22 @@ typedef struct intnode {
     struct intnode *next;
 } t_intnode;
 
-extern void free_nodes(t_intnode *root);
+typedef struct digraph {
+    int V;  // num vertices
+    int E;  // num edges
+    t_intnode **vertices;
+} t_digraph;
 
-extern void init_digraph(t_intnode *digraph[], int size);
+t_digraph *digraph_factory(int size);
 
-extern void free_digraph(t_intnode *digraph[], int size);
+void free_digraph(t_digraph *g);
 
-extern int add_edge(t_intnode *digraph[], int from, int to);
+void free_nodes(t_intnode *root);
 
-int reverse(t_intnode *src[], t_intnode *dest[], int size);
+int add_edge(t_digraph *g, int from, int to);
 
-void dfs(t_intnode *digraph[], int from, int *visited, int *edge_to);
+t_digraph *reverse(t_digraph *g);
+
+void dfs(t_digraph *g, int from, int *visited, int *edge_to);
 
 #endif

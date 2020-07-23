@@ -3,44 +3,49 @@
 #include <check.h>
 #include "digraph.h"
 
+
 const int SIZE = 5;
 
-START_TEST(test_digraph_init) {
-    struct intnode *digraph[SIZE];
-    init_digraph(digraph, SIZE);
+
+START_TEST(test_digraph_factory) {
+    t_digraph *g = digraph_factory(SIZE);
+
+    ck_assert_int_eq(5, g->V);
+
     for (int i = 0; i < SIZE; ++i)
-	ck_assert_ptr_eq(digraph[i], NULL);
+	ck_assert_ptr_null(g->vertices[i]);
+
+    free_digraph(g);
 } END_TEST
 
+
 START_TEST(test_digraph_add_edge) {
-    struct intnode *digraph[SIZE];
-    init_digraph(digraph, SIZE);
-    add_edge(digraph, 0, 1);
-    ck_assert_int_eq(digraph[0]->val, 1);
-    free_digraph(digraph, SIZE);
+    t_digraph *g = digraph_factory(SIZE);
+
+    add_edge(g, 0, 1);
+    ck_assert_int_eq(g->vertices[0]->val, 1);
+
+    free_digraph(g);
 }
 
 START_TEST(test_reverse_digraph) {
-    struct intnode *digraph[SIZE];
-    init_digraph(digraph, SIZE);
-    struct intnode *reversed[SIZE];
-    init_digraph(reversed, SIZE);
-    add_edge(digraph, 0, 1);
-    add_edge(digraph, 0, 3);
-    add_edge(digraph, 3, 0);
-    reverse(digraph, reversed, SIZE);
+    t_digraph *g = digraph_factory(SIZE);
+    add_edge(g, 0, 1);
+    add_edge(g, 0, 3);
+    add_edge(g, 3, 0);
 
-    ck_assert_int_eq(reversed[1]->val, 0);
-    ck_assert_int_eq(reversed[3]->val, 0);
-    ck_assert_int_eq(reversed[0]->val, 3);
+    t_digraph *reversed = reverse(g);
 
-    free_digraph(digraph, SIZE);
-    free_digraph(reversed, SIZE);
+    ck_assert_int_eq(0, reversed->vertices[1]->val);
+    ck_assert_int_eq(0, reversed->vertices[3]->val);
+    ck_assert_int_eq(3, reversed->vertices[0]->val);
+
+    free_digraph(g);
+    free_digraph(reversed);
 }
 
 START_TEST(test_dfs) {
-    struct intnode *digraph[SIZE];
-    init_digraph(digraph, SIZE);
+    t_digraph *g = digraph_factory(SIZE);
 
     int visited[SIZE];
     int edge_to[SIZE];
@@ -49,16 +54,16 @@ START_TEST(test_dfs) {
 	edge_to[i] = -1;
     }
 
-    add_edge(digraph, 0, 1);
-    add_edge(digraph, 1, 2);
-    add_edge(digraph, 2, 3);
-    add_edge(digraph, 3, 4);
+    add_edge(g, 0, 1);
+    add_edge(g, 1, 2);
+    add_edge(g, 2, 3);
+    add_edge(g, 3, 4);
 
-    dfs(digraph, 0, visited, edge_to);
+    dfs(g, 0, visited, edge_to);
 
     ck_assert_int_eq(1, visited[4]);
     ck_assert_int_eq(3, edge_to[4]);
-    free_digraph(digraph, SIZE);
+    free_digraph(g);
 }
 
 
@@ -69,7 +74,7 @@ Suite *digraph_suite(void) {
   s = suite_create("Digraph");
   tc_core = tcase_create("Core");
 
-  tcase_add_test(tc_core, test_digraph_init);
+  tcase_add_test(tc_core, test_digraph_factory);
   tcase_add_test(tc_core, test_digraph_add_edge);
   tcase_add_test(tc_core, test_reverse_digraph);
   tcase_add_test(tc_core, test_dfs);
