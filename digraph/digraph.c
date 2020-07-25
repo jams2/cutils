@@ -88,18 +88,18 @@ void dfs(Digraph *g, int src, int *visited, int *edge_to)
 void bfs(Digraph *g, int src, int *visited, int *edge_to)
 {
 	IntQueue *q = int_queue_factory();
-	push_back(q, src);
+	enqueue(q, src);
 	IntNode *cur;
 	int *v = malloc(sizeof(*v));
 	visited[src] = 1;
 	while (q->size > 0) {
-		pop_front(q, v);
+		dequeue(q, v);
 		cur = g->vertices[*v];
 		while (cur != NULL) {
 			if (!visited[cur->val]) {
 				visited[cur->val] = 1;
 				edge_to[cur->val] = *v;
-				push_back(q, cur->val);
+				enqueue(q, cur->val);
 			}
 			cur = cur->next;
 		}
@@ -116,7 +116,7 @@ int path_length(Digraph *g, int *edge_to, int src, int dest)
 	return v == src ? l : -1;
 }
 
-int push_back(IntQueue *q, int val)
+int enqueue(IntQueue *q, int val)
 {
 	IntNode *n;
 	if ((n = int_node_factory(val, NULL)) == NULL)
@@ -132,10 +132,10 @@ int push_back(IntQueue *q, int val)
 	return 0;
 }
 
-int pop_front(IntQueue *q, int *val)
+int dequeue(IntQueue *q, int *val)
 {
 	if (q->size == 0)
-		return ERR_Q_POPEMPTY;
+		return ERR_Q_EMPTY;
 	*val = q->front->val;
 	IntNode *tmp = q->front;
 	if (q->front == q->back)

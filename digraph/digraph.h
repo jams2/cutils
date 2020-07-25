@@ -20,7 +20,7 @@ typedef struct int_queue {
 
 enum digraph_error_codes {
 	OK,
-	ERR_Q_POPEMPTY,
+	ERR_Q_EMPTY,
 	ERR_MALLOC_INTNODE,
 };
 
@@ -48,8 +48,8 @@ void bfs(Digraph *g, int src, int *visited, int *edge_to);
 
 int path_length(Digraph *g, int *edge_to, int src, int dest);
 
-int push_back(IntQueue *q, int val);
+int enqueue(IntQueue *q, int val);
 
-int pop_front(IntQueue *q, int *val);
+int dequeue(IntQueue *q, int *val);
 
 #endif

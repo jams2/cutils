@@ -151,19 +151,19 @@ START_TEST(test_queue_ops) {
 	IntQueue *q = int_queue_factory();
 
 	int *val = malloc(sizeof(int));
-	push_back(q, 5);
-	pop_front(q, val);
+	enqueue(q, 5);
+	dequeue(q, val);
 	ck_assert_int_eq(5, *val);
 
 	for (int i = 0; i < 5; ++i)
-		push_back(q, i);
+		enqueue(q, i);
 	ck_assert_int_eq(5, q->size);
 
 	for (int i = 0; i < 5; ++i)
-		pop_front(q, val);
+		dequeue(q, val);
 	ck_assert_int_eq(0, q->size);
 
-	ck_assert_int_eq(ERR_Q_POPEMPTY, pop_front(q, val));
+	ck_assert_int_eq(ERR_Q_EMPTY, dequeue(q, val));
 
 	free(val);
 	free_int_queue(q);
