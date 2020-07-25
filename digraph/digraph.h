@@ -14,12 +14,15 @@ typedef struct digraph {
 
 typedef struct int_queue {
 	int size;
-	int status;
 	IntNode *front;
 	IntNode *back;
 } IntQueue;
 
-enum int_q_status { INT_Q_OK, INT_Q_ERR_POPEMPTY };
+enum digraph_error_codes {
+	OK,
+	ERR_Q_POPEMPTY,
+	ERR_MALLOC_INTNODE,
+};
 
 Digraph *digraph_factory(int size);
 
@@ -33,18 +36,20 @@ void free_nodes(IntNode *root);
 
 void free_int_queue(IntQueue *q);
 
-int add_edge(Digraph *g, int from, int to);
+int add_edge(Digraph *g, int src, int dest);
 
 Digraph *reverse(Digraph *g);
 
-void init_dfs_arrays(Digraph *g, int *visited, int *edge_to);
+void init_search_arrays(Digraph *g, int *visited, int *edge_to);
 
-void dfs(Digraph *g, int from, int *visited, int *edge_to);
+void dfs(Digraph *g, int src, int *visited, int *edge_to);
 
-void bfs(Digraph *g, int from, int *visited, int *edge_to);
+void bfs(Digraph *g, int src, int *visited, int *edge_to);
 
-void push_back(IntQueue *q, int val);
+int path_length(Digraph *g, int *edge_to, int src, int dest);
 
-int pop_front(IntQueue *q);
+int push_back(IntQueue *q, int val);
+
+int pop_front(IntQueue *q, int *val);
 
 #endif
