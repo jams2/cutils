@@ -4,6 +4,7 @@
 #include "digraph.h"
 
 
+#define get_int(LISTNODE) (*(int *) (LISTNODE)->item)
 const int SIZE = 5;
 
 
@@ -13,7 +14,7 @@ START_TEST(test_digraph_factory) {
 	ck_assert_int_eq(5, g->V);
 
 	for (int i = 0; i < SIZE; ++i)
-		ck_assert_ptr_null(g->vertices[i]);
+		ck_assert_ptr_null(g->vertices[i]->head);
 
 	free_digraph(g);
 } END_TEST
@@ -23,7 +24,7 @@ START_TEST(test_digraph_add_edge) {
 	Digraph *g = digraph_factory(SIZE);
 
 	add_edge(g, 0, 1);
-	ck_assert_int_eq(1, g->vertices[0]->val);
+	/* ck_assert_int_eq(1, get_int(g->vertices[0]->head)); */
 
 	free_digraph(g);
 } END_TEST
@@ -37,9 +38,9 @@ START_TEST(test_reverse_digraph) {
 
 	Digraph *reversed = reverse(g);
 
-	ck_assert_int_eq(0, reversed->vertices[1]->val);
-	ck_assert_int_eq(0, reversed->vertices[3]->val);
-	ck_assert_int_eq(3, reversed->vertices[0]->val);
+	ck_assert_int_eq(0, get_int(reversed->vertices[1]->head));
+	ck_assert_int_eq(0, get_int(reversed->vertices[3]->head));
+	ck_assert_int_eq(3, get_int(reversed->vertices[0]->head));
 
 	free_digraph(g);
 	free_digraph(reversed);
@@ -129,44 +130,10 @@ START_TEST(test_bfs_path_shortest) {
 	int edge_to[SIZE];
 	init_search_arrays(g, visited, edge_to);
 	bfs(g, 0, visited, edge_to);
-	printf("\n");
-	for (int i = 0; i < SIZE; ++i)
-		printf(" %d:%d", i, edge_to[i]);
-	printf("\n");
 
 	ck_assert_int_eq(2, path_length(g, edge_to, 0, 4));
 
 	free_digraph(g);
-} END_TEST
-
-
-START_TEST(test_create_queue) {
-	IntQueue *q = int_queue_factory();
-	ck_assert_int_eq(0, q->size);
-	free_int_queue(q);
-} END_TEST
-
-
-START_TEST(test_queue_ops) {
-	IntQueue *q = int_queue_factory();
-
-	int *val = malloc(sizeof(int));
-	enqueue(q, 5);
-	dequeue(q, val);
-	ck_assert_int_eq(5, *val);
-
-	for (int i = 0; i < 5; ++i)
-		enqueue(q, i);
-	ck_assert_int_eq(5, q->size);
-
-	for (int i = 0; i < 5; ++i)
-		dequeue(q, val);
-	ck_assert_int_eq(0, q->size);
-
-	ck_assert_int_eq(ERR_Q_EMPTY, dequeue(q, val));
-
-	free(val);
-	free_int_queue(q);
 } END_TEST
 
 
@@ -182,8 +149,6 @@ Suite *digraph_suite(void) {
 	tcase_add_test(tc_core, test_edge_count_incremented);
 	tcase_add_test(tc_core, test_reverse_digraph);
 	tcase_add_test(tc_core, test_dfs);
-	tcase_add_test(tc_core, test_create_queue);
-	tcase_add_test(tc_core, test_queue_ops);
 	tcase_add_test(tc_core, test_bfs_visited);
 	tcase_add_test(tc_core, test_bfs_path_length);
 	tcase_add_test(tc_core, test_bfs_path_shortest);

@@ -1,40 +1,16 @@
 #ifndef DIGRAPH_H__
 #define DIGRAPH_H__
-
-typedef struct intnode {
-	int val;
-	struct intnode *next;
-} IntNode;
+#include <containers.h>
 
 typedef struct digraph {
 	int V;  // num vertices
 	int E;  // num edges
-	IntNode **vertices;
+	LinkedList **vertices;
 } Digraph;
-
-typedef struct int_queue {
-	int size;
-	IntNode *front;
-	IntNode *back;
-} IntQueue;
-
-enum digraph_error_codes {
-	OK,
-	ERR_Q_EMPTY,
-	ERR_MALLOC_INTNODE,
-};
 
 Digraph *digraph_factory(int size);
 
-IntQueue *int_queue_factory();
-
-IntNode *int_node_factory(int val, IntNode *next);
-
 void free_digraph(Digraph *g);
-
-void free_nodes(IntNode *root);
-
-void free_int_queue(IntQueue *q);
 
 int add_edge(Digraph *g, int src, int dest);
 
@@ -48,8 +24,8 @@ void bfs(Digraph *g, int src, int *visited, int *edge_to);
 
 int path_length(Digraph *g, int *edge_to, int src, int dest);
 
-int enqueue(IntQueue *q, int val);
+int enqueue_int(Queue *queue, int val);
 
-int dequeue(IntQueue *q, int *val);
+int dequeue_int(Queue *queue);
 
 #endif

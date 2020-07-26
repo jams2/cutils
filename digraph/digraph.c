@@ -1,51 +1,39 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include "digraph.h"
 
 Digraph *digraph_factory(int size)
 {
 	Digraph *g;
+	LinkedList *list;
 	if ((g = malloc(sizeof(*g))) == NULL)
 		return NULL;
 	g->V = size;
 	g->E = 0;
 	if ((g->vertices = calloc(size, sizeof(*g->vertices))) == NULL)
 		return NULL;
-	for (int i = 0; i < size; ++i)
-		g->vertices[i] = NULL;
+	for (int i = 0; i < size; ++i) {
+		list = malloc(sizeof(*list));
+		init_list(list, sizeof(int));
+		g->vertices[i] = list;
+	}
 	return g;
-}
-
-IntQueue *int_queue_factory()
-{
-	IntQueue *q;
-	if ((q = malloc(sizeof(*q))) == NULL)
-		return NULL;
-	q->size = 0;
-	q->front = NULL;
-	q->back = NULL;
-	return q;
-}
-
-IntNode *int_node_factory(int val, IntNode *next)
-{
-	IntNode *n;
-	if ((n = malloc(sizeof(*n))) == NULL)
-		return NULL;
-	n->val = val;
-	n->next = next;
-	return n;
 }
 
 int add_edge(Digraph *g, int src, int dest)
 {
-	IntNode *cur = g->vertices[src];
+	LinkedList *list = g->vertices[src];
+	ListNode *cur = list->head;
 	while (cur != NULL) {
-		// Return -1 if it's a duplicate edge.
-		if (cur->val == dest) return -1;
+		if (*(int *)cur->item == dest)
+			return LL_INSERT_DUPLICATE;
 		cur = cur->next;
 	}
-	IntNode *new_node = int_node_factory(dest, g->vertices[src]);
-	g->vertices[src] = new_node;
+	int list_err = 0;
+	int *val = malloc(sizeof(*val));
+	*val = dest;
+	if ((list_err = ll_append(list, val)) != LL_OK)
+		return list_err;
 	g->E++;
 	return 0;
 }
@@ -53,11 +41,13 @@ int add_edge(Digraph *g, int src, int dest)
 Digraph *reverse(Digraph *g)
 {
 	Digraph *reversed = digraph_factory(g->V);
-	IntNode *cur;
+	LinkedList *list;
+	ListNode *cur;
 	for (int i = 0; i < g->V; ++i) {
-		cur = g->vertices[i];
+		list = g->vertices[i];
+		cur = list->head;
 		while (cur != NULL) {
-			add_edge(reversed, cur->val, i);
+			add_edge(reversed, *(int *)cur->item, i);
 			cur = cur->next;
 		}
 	}
@@ -74,12 +64,14 @@ void init_search_arrays(Digraph *g, int *visited, int *edge_to)
 
 void dfs(Digraph *g, int src, int *visited, int *edge_to)
 {
+	ListNode *cur = g->vertices[src]->head;
+	int val;
 	visited[src] = 1;
-	IntNode *cur = g->vertices[src];
 	while (cur != NULL) {
-		if (!visited[cur->val]) {
-			edge_to[cur->val] = src;
-			dfs(g, cur->val, visited, edge_to);
+		val = *(int *)cur->item;
+		if (!visited[val]) {
+			edge_to[val] = src;
+			dfs(g, val, visited, edge_to);
 		}
 		cur = cur->next;
 	}
@@ -87,25 +79,26 @@ void dfs(Digraph *g, int src, int *visited, int *edge_to)
 
 void bfs(Digraph *g, int src, int *visited, int *edge_to)
 {
-	IntQueue *q = int_queue_factory();
-	enqueue(q, src);
-	IntNode *cur;
-	int *v = malloc(sizeof(*v));
+	Queue *q = malloc(sizeof(*q));
+	init_queue(q, sizeof(int));
+	enqueue_int(q, src);
+	ListNode *cur;
+	int vertex, adj;
 	visited[src] = 1;
-	while (q->size > 0) {
-		dequeue(q, v);
-		cur = g->vertices[*v];
+	while (q->len > 0) {
+		vertex = dequeue_int(q);
+		cur = g->vertices[vertex]->head;
 		while (cur != NULL) {
-			if (!visited[cur->val]) {
-				visited[cur->val] = 1;
-				edge_to[cur->val] = *v;
-				enqueue(q, cur->val);
+			adj = *(int *)cur->item;
+			if (!visited[adj]) {
+				visited[adj] = 1;
+				edge_to[adj] = vertex;
+				enqueue_int(q, adj);
 			}
 			cur = cur->next;
 		}
 	}
-	free(v);
-	free_int_queue(q);
+	free_queue(q, NULL);
 }
 
 int path_length(Digraph *g, int *edge_to, int src, int dest)
@@ -116,56 +109,27 @@ int path_length(Digraph *g, int *edge_to, int src, int dest)
 	return v == src ? l : -1;
 }
 
-int enqueue(IntQueue *q, int val)
+int enqueue_int(Queue *queue, int val)
 {
-	IntNode *n;
-	if ((n = int_node_factory(val, NULL)) == NULL)
-		return ERR_MALLOC_INTNODE;
-	if (q->back == NULL && q->front == NULL) {
-		q->front = n;
-		q->back = n;
-	} else {
-		q->back->next = n;
-		q->back = n;
-	}
-	q->size++;
-	return 0;
+	int *v = malloc(sizeof(*v));
+	*v = val;
+	return enqueue(queue, v);
 }
 
-int dequeue(IntQueue *q, int *val)
+int dequeue_int(Queue *queue)
 {
-	if (q->size == 0)
-		return ERR_Q_EMPTY;
-	*val = q->front->val;
-	IntNode *tmp = q->front;
-	if (q->front == q->back)
-		q->back = NULL;
-	q->front = q->front->next;
-	q->size--;
-	free(tmp);
-	return 0;
-}
-
-void free_nodes(IntNode *root)
-{
-	IntNode *current = root;
-	IntNode *tmp;
-	while (current != NULL) {
-		tmp = current->next;
-		free(current);
-		current = tmp;
-	}
+	int q_err = 0;
+	int *val = (int *)dequeue(queue, &q_err);
+	if (val == NULL) /* error handling */
+		;
+	int ret = *val;
+	free(val);
+	return ret;
 }
 
 void free_digraph(Digraph *g)
 {
 	for (int i = 0; i < g->V; ++i)
-		free_nodes(g->vertices[i]);
+		free_list(g->vertices[i], NULL);
 	free(g);
-}
-
-void free_int_queue(IntQueue *q)
-{
-	free_nodes(q->front);
-	free(q);
 }

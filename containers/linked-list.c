@@ -1,12 +1,11 @@
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-#include <assert.h>
-#include "linked-list.h"
+#include "containers.h"
 
-void init_list(LinkedList *list)
+void init_list(LinkedList *list, int item_size)
 {
 	list->len = 0;
+	list->item_size = item_size;
 	list->head = NULL;
 	list->tail = NULL;
 }
@@ -32,15 +31,16 @@ void free_node(ListNode *node, void (*free_func)(void *))
 	free(node);
 }
 
-ListNode *make_node(void *val, int *node_err)
+ListNode *make_node(void *val, int item_size, ListNode *next, int *node_err)
 {
 	ListNode *n;
 	if ((n = malloc(sizeof(*n))) == NULL ||
-	    (n->item = malloc(sizeof(*val))) == NULL) {
+	    (n->item = malloc(item_size)) == NULL) {
 		*node_err = LL_MALLOC_ERR;
 		return n;
 	}
-	memcpy(n->item, val, sizeof(*val));
+	memcpy(n->item, val, item_size);
+	n->next = next;
 	return n;
 }
 
@@ -49,13 +49,12 @@ int len(LinkedList *list)
 	return list->len;
 }
 
-int append(LinkedList *list, void *val)
+int ll_append(LinkedList *list, void *val)
 {
 	int node_err;
 	ListNode *node;
-	if ((node = make_node(val, &node_err)) == NULL)
+	if ((node = make_node(val, list->item_size, NULL, &node_err)) == NULL)
 		return node_err;
-	node->next = NULL;
 	if (list->tail == NULL) {
 		list->head = list->tail = node;
 	} else {
@@ -66,13 +65,12 @@ int append(LinkedList *list, void *val)
 	return LL_OK;
 }
 
-int prepend(LinkedList *list, void *val)
+int ll_prepend(LinkedList *list, void *val)
 {
 	int node_err;
 	ListNode *node;
-	if ((node = make_node(val, &node_err)) == NULL)
+	if ((node = make_node(val, list->item_size, list->head, &node_err)) == NULL)
 		return node_err;
-	node->next = list->head;
 	if (list->tail == NULL)
 		list->head = list->tail = node;
 	else
@@ -125,5 +123,3 @@ void *remove_node(LinkedList *list, int index, int *list_err)
 	--list->len;
 	return item;
 }
-
-int main() { return 0; }

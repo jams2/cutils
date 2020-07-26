@@ -1,16 +1,18 @@
-LIBDIR = $$HOME/.local/lib
+LIBDIR = $$HOME/.local/lib/
+L_ARGS = -Wl,-rpath=$(LIBDIR)
+INCLUDE = -I$(LIBDIR)
+CHECK_ARGS = -lcheck -lm -lpthread -lrt $(L_ARGS) -L$(LIBDIR) -lcontainers
 
 digraph: digraph.c digraph.h
-	gcc -c -Wall -Werror -fpic digraph.c
+	gcc -c -Wall -Werror $(L_ARGS) $(INCLUDE) -fpic digraph.c
 	gcc -shared -o $(LIBDIR)/libdigraph.so digraph.o
 	cp digraph.h $(LIBDIR)
 
 check: check_digraph.c digraph.c digraph.h
-	gcc -c -Wall -Werror -fpic digraph.c
-	gcc -c -Wall -Werror check_digraph.c
-	gcc digraph.o check_digraph.o -lcheck -lm -lpthread -lrt -o check_digraph_tests
+	gcc -c -Wall -Werror -fpic $(L_ARGS) $(INCLUDE) digraph.c
+	gcc -c -Wall -Werror $(L_ARGS) $(INCLUDE) check_digraph.c
+	gcc digraph.o check_digraph.o $(CHECK_ARGS) -o check_digraph_tests
 	./check_digraph_tests
 
 clean:
-	rm digraph.o
 	rm check_digraph_tests check_digraph.o digraph.o
