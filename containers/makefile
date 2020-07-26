@@ -15,5 +15,8 @@ check: $(REQUIRES)
 	gcc queue.o linked-list.o check_containers.o $(CHECK_ARGS) -o check_containers
 	./check_containers
 
+memcheck: check_containers
+	CK_FORK=no valgrind -s --leak-check=full ./check_containers
+
 clean:
 	rm *.o

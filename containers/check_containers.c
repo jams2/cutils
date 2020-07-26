@@ -6,39 +6,27 @@
 LinkedList *list;
 Queue *queue;
 
-void ll_setup_once()
+void setup_linked_list()
 {
 	list = malloc(sizeof(*list));
+	init_list(list, sizeof(int));
 }
 
-void ll_teardown_once()
+void teardown_linked_list()
 {
 	free_list(list, NULL);
 }
 
-void ll_setup_all()
-{
-	init_list(list, sizeof(int));
-}
-
-void ll_teardown_all() {;}
-
-void queue_setup_once()
+void setup_queue()
 {
 	queue = malloc(sizeof(*queue));
-}
-
-void queue_teardown_once()
-{
-	free_queue(queue, NULL);
-}
-
-void queue_setup_all()
-{
 	init_queue(queue, sizeof(int));
 }
 
-void queue_teardown_all() {;}
+void teardown_queue()
+{
+	free_queue(queue, NULL);
+}
 
 
 START_TEST(test_init_list)
@@ -104,6 +92,7 @@ START_TEST(test_remove_head_empty)
 	int *val = remove_head(list, &err);
 	ck_assert_int_eq(err, LL_REMOVE_EMPTY);
 	ck_assert_ptr_null(val);
+	free(val);
 } END_TEST
 
 
@@ -113,6 +102,7 @@ START_TEST(test_remove_tail_empty)
 	int *val = remove_tail(list, &err);
 	ck_assert_int_eq(err, LL_REMOVE_EMPTY);
 	ck_assert_ptr_null(val);
+	free(val);
 } END_TEST
 
 
@@ -124,6 +114,7 @@ START_TEST(test_remove_head_nonempty)
 	int *res = remove_head(list, &err);
 	ck_assert_int_eq(val, *res);
 	ck_assert_int_eq(-1, err);
+	free(res);
 } END_TEST
 
 
@@ -135,6 +126,7 @@ START_TEST(test_remove_tail_nonempty)
 	int *res = remove_tail(list, &err);
 	ck_assert_int_eq(val, *res);
 	ck_assert_int_eq(-1, err);
+	free(res);
 } END_TEST
 
 
@@ -145,9 +137,10 @@ START_TEST(test_remove_node_first)
 	ll_append(list, &val);
 	val = 6;
 	ll_append(list, &val);
-	int res = *(int *)remove_node(list, 0, &err);
-	ck_assert_int_eq(5, res);
+	int *res = remove_node(list, 0, &err);
+	ck_assert_int_eq(5, *res);
 	ck_assert_int_eq(6, node_int_val(list->head));
+	free(res);
 } END_TEST
 
 
@@ -156,9 +149,10 @@ START_TEST(test_remove_node_mid)
 	for (int i = 0; i < 100; ++i)
 		ll_append(list, &i);
 	int err;
-	int res = *(int *)remove_node(list, 50, &err);
-	ck_assert_int_eq(50, res);
+	int *res = remove_node(list, 50, &err);
+	ck_assert_int_eq(50, *res);
 	ck_assert_int_eq(99, list->len);
+	free(res);
 } END_TEST
 
 
@@ -171,16 +165,26 @@ START_TEST(test_enqueue)
 	val = 6;
 	enqueue(queue, &val);
 	ck_assert_int_eq(6, node_int_val(queue->tail));
+
+	int *ret;
+	while (queue->len > 0) {
+		ret = dequeue(queue, &val);
+		free(ret);
+	}
 } END_TEST
 
 
 START_TEST(test_dequeue)
 {
 	int err;
+	int *val;
 	for (int i = 0; i < 5; ++i)
 		enqueue(queue, &i);
-	for (int i = 0; i < 5; ++i)
-		ck_assert_int_eq(i, *(int *)dequeue(queue, &err));
+	for (int i = 0; i < 5; ++i) {
+		val = (int *)dequeue(queue, &err);
+		ck_assert_int_eq(i, *val);
+		free(val);
+	}
 } END_TEST
 
 
@@ -193,10 +197,9 @@ Suite *container_suite(void) {
 	tc_linked_list = tcase_create("Linked_list");
 	tc_queue = tcase_create("Queue");
 
-	tcase_add_checked_fixture(tc_linked_list, ll_setup_all, ll_teardown_all);
-	tcase_add_unchecked_fixture(tc_linked_list, ll_setup_once, ll_teardown_once);
-	tcase_add_checked_fixture(tc_queue, queue_setup_all, queue_teardown_all);
-	tcase_add_unchecked_fixture(tc_queue, queue_setup_once, queue_teardown_once);
+	tcase_add_checked_fixture(tc_linked_list, setup_linked_list, teardown_linked_list);
+
+	tcase_add_checked_fixture(tc_queue, setup_queue, teardown_queue);
 
 	tcase_add_test(tc_linked_list, test_init_list);
 	tcase_add_test(tc_linked_list, test_make_node);

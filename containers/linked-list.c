@@ -16,11 +16,9 @@ void free_list(LinkedList *list, void (*free_func)(void *))
 	while (list->head != NULL) {
 		tmp = list->head;
 		list->head = tmp->next;
-		if (free_func)
-			(*free_func)(tmp->item);
-		free(tmp->item);
-		free(tmp);
+		free_node(tmp, free_func);
 	}
+	free(list);
 }
 
 void free_node(ListNode *node, void (*free_func)(void *))

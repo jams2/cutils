@@ -20,6 +20,14 @@ Digraph *digraph_factory(int size)
 	return g;
 }
 
+void free_digraph(Digraph *g)
+{
+	for (int i = 0; i < g->V; ++i)
+		free_list(g->vertices[i], NULL);
+	free(g->vertices);
+	free(g);
+}
+
 int add_edge(Digraph *g, int src, int dest)
 {
 	LinkedList *list = g->vertices[src];
@@ -30,9 +38,7 @@ int add_edge(Digraph *g, int src, int dest)
 		cur = cur->next;
 	}
 	int list_err = 0;
-	int *val = malloc(sizeof(*val));
-	*val = dest;
-	if ((list_err = ll_append(list, val)) != LL_OK)
+	if ((list_err = ll_append(list, &dest)) != LL_OK)
 		return list_err;
 	g->E++;
 	return 0;
@@ -41,11 +47,9 @@ int add_edge(Digraph *g, int src, int dest)
 Digraph *reverse(Digraph *g)
 {
 	Digraph *reversed = digraph_factory(g->V);
-	LinkedList *list;
 	ListNode *cur;
 	for (int i = 0; i < g->V; ++i) {
-		list = g->vertices[i];
-		cur = list->head;
+		cur = g->vertices[i]->head;
 		while (cur != NULL) {
 			add_edge(reversed, *(int *)cur->item, i);
 			cur = cur->next;
@@ -111,25 +115,16 @@ int path_length(Digraph *g, int *edge_to, int src, int dest)
 
 int enqueue_int(Queue *queue, int val)
 {
-	int *v = malloc(sizeof(*v));
-	*v = val;
-	return enqueue(queue, v);
+	return enqueue(queue, &val);
 }
 
 int dequeue_int(Queue *queue)
 {
 	int q_err = 0;
-	int *val = (int *)dequeue(queue, &q_err);
+	int *val = dequeue(queue, &q_err);
 	if (val == NULL) /* error handling */
 		;
 	int ret = *val;
 	free(val);
 	return ret;
-}
-
-void free_digraph(Digraph *g)
-{
-	for (int i = 0; i < g->V; ++i)
-		free_list(g->vertices[i], NULL);
-	free(g);
 }

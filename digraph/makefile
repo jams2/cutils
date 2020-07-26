@@ -11,8 +11,11 @@ digraph: digraph.c digraph.h
 check: check_digraph.c digraph.c digraph.h
 	gcc -c -Wall -Werror -fpic $(L_ARGS) $(INCLUDE) digraph.c
 	gcc -c -Wall -Werror $(L_ARGS) $(INCLUDE) check_digraph.c
-	gcc digraph.o check_digraph.o $(CHECK_ARGS) -o check_digraph_tests
-	./check_digraph_tests
+	gcc digraph.o check_digraph.o $(CHECK_ARGS) -o check_digraph
+	./check_digraph
+
+memcheck: check_digraph
+	CK_FORK=no valgrind -s --leak-check=full ./check_digraph
 
 clean:
-	rm check_digraph_tests check_digraph.o digraph.o
+	rm check_digraph check_digraph.o digraph.o
