@@ -6,18 +6,13 @@
 const int SIZE = 5;
 Digraph *g;
 
-void setup()
+void setup() { g = digraph_factory(SIZE); }
+
+void teardown() { free_digraph(g); }
+
+
+START_TEST(test_digraph_factory)
 {
-	g = digraph_factory(SIZE);
-}
-
-void teardown()
-{
-	free_digraph(g);
-}
-
-
-START_TEST(test_digraph_factory) {
 	ck_assert_int_eq(5, g->V);
 
 	for (int i = 0; i < SIZE; ++i)
@@ -25,13 +20,15 @@ START_TEST(test_digraph_factory) {
 } END_TEST
 
 
-START_TEST(test_digraph_add_edge) {
+START_TEST(test_digraph_add_edge)
+{
 	add_edge(g, 0, 1);
 	ck_assert_int_eq(1, node_int_val(g->vertices[0]->head));
 } END_TEST
 
 
-START_TEST(test_reverse_digraph) {
+START_TEST(test_reverse_digraph)
+{
 	add_edge(g, 0, 1);
 	add_edge(g, 0, 3);
 	add_edge(g, 3, 0);
@@ -46,14 +43,16 @@ START_TEST(test_reverse_digraph) {
 } END_TEST
 
 
-START_TEST(test_edge_count_incremented) {
+START_TEST(test_edge_count_incremented)
+{
 	add_edge(g, 0, 1);
 	add_edge(g, 0, 2);
 	ck_assert_int_eq(2, g->E);
 }
 
 
-START_TEST(test_dfs) {
+START_TEST(test_dfs)
+{
 	add_edge(g, 0, 1);
 	add_edge(g, 1, 2);
 	add_edge(g, 2, 3);
@@ -69,7 +68,8 @@ START_TEST(test_dfs) {
 } END_TEST
 
 
-START_TEST(test_bfs_visited) {
+START_TEST(test_bfs_visited)
+{
 	add_edge(g, 0, 1);
 	add_edge(g, 1, 2);
 	add_edge(g, 2, 3);
@@ -85,7 +85,8 @@ START_TEST(test_bfs_visited) {
 } END_TEST
 
 
-START_TEST(test_bfs_path_length) {
+START_TEST(test_bfs_path_length)
+{
 	add_edge(g, 0, 2);
 	add_edge(g, 2, 4);
 
@@ -99,7 +100,8 @@ START_TEST(test_bfs_path_length) {
 } END_TEST
 
 
-START_TEST(test_bfs_path_shortest) {
+START_TEST(test_bfs_path_shortest)
+{
 	/* shortest path: 0 -> 2 -> 4 */
 	add_edge(g, 0, 2);
 	add_edge(g, 2, 4);

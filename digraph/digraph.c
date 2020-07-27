@@ -81,11 +81,13 @@ void dfs(Digraph *g, int src, int *visited, int *edge_to)
 	}
 }
 
+int cycle_length(Digraph *g, int src,)
+
 void bfs(Digraph *g, int src, int *visited, int *edge_to)
 {
 	Queue *q = malloc(sizeof(*q));
 	init_queue(q, sizeof(int));
-	enqueue_int(q, src);
+	enqueue(q, &src);
 	ListNode *cur;
 	int vertex, adj;
 	visited[src] = 1;
@@ -97,7 +99,7 @@ void bfs(Digraph *g, int src, int *visited, int *edge_to)
 			if (!visited[adj]) {
 				visited[adj] = 1;
 				edge_to[adj] = vertex;
-				enqueue_int(q, adj);
+				enqueue(q, &adj);
 			}
 			cur = cur->next;
 		}
@@ -118,10 +120,9 @@ int enqueue_int(Queue *queue, int val)
 	return enqueue(queue, &val);
 }
 
-int dequeue_int(Queue *queue)
+int dequeue_int(Queue *queue, int *err)
 {
-	int q_err = 0;
-	int *val = dequeue(queue, &q_err);
+	int *val = dequeue(queue, err);
 	if (val == NULL) /* error handling */
 		;
 	int ret = *val;

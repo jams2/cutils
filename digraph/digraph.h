@@ -26,6 +26,6 @@ int path_length(Digraph *g, int *edge_to, int src, int dest);
 
 int enqueue_int(Queue *queue, int val);
 
-int dequeue_int(Queue *queue);
+int dequeue_int(Queue *queue, int *err);
 
 #endif
