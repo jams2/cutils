@@ -3,38 +3,36 @@
 #include "containers.h"
 
 
-RBNode *rb_new_node(char *key, void *val, enum colour colour)
+void init_rb_node(RBNode *node, char *key, void *val, enum colour colour)
 {
-	RBNode *node = malloc(sizeof(*node));
 	node->key = key;
 	node->val = val;
 	node->left = node->right = NULL;
 	node->n = 1;
 	node->colour = colour;
-	return node;
 }
 
-void rb_init_tree(RedBlackTree *tree)
+void init_rb_tree(RedBlackTree *tree)
 {
 	tree->root = NULL;
 }
 
-void rb_free_tree(RedBlackTree *tree)
+void free_rb_tree(RedBlackTree *tree)
 {
-	rb_free_all_nodes(tree->root);
+	free_rb_nodes(tree->root);
 	free(tree);
 }
 
-void rb_free_all_nodes(RBNode *node)
+void free_rb_nodes(RBNode *node)
 {
 	if (node == NULL)
 		return;
-	rb_free_all_nodes(node->right);
-	rb_free_all_nodes(node->left);
+	free_rb_nodes(node->right);
+	free_rb_nodes(node->left);
 	free(node);
 }
 
-void rb_free_node(RBNode *node)
+void free_rb_node(RBNode *node)
 {
 	free(node);
 }
@@ -69,10 +67,19 @@ void rb_put(RedBlackTree *tree, char *key, void *val)
 	tree->root->colour = BLACK;
 }
 
+void *rb_get(RedBlackTree *tree, char *key)
+{
+	void *result = NULL;
+	return result;
+}
+
 RBNode *rb_put_node(RBNode *node, char *key, void *val)
 {
-	if (node == NULL)
-		return rb_new_node(key, val, RED);
+	if (node == NULL) {
+		RBNode *node = malloc(sizeof(*node));
+		init_rb_node(node, key, val, RED);
+		return node;
+	}
 	int cmp;
 	if ((cmp = strcmp(key, node->key)) < 0)
 		node->left = rb_put_node(node->left, key, val);

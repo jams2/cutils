@@ -5,6 +5,7 @@
 
 LinkedList *list;
 Queue *queue;
+RedBlackTree *tree;
 
 void setup_linked_list()
 {
@@ -26,6 +27,17 @@ void setup_queue()
 void teardown_queue()
 {
 	free_queue(queue, NULL);
+}
+
+void setup_rb_tree()
+{
+	tree = malloc(sizeof(*tree));
+	init_rb_tree(tree);
+}
+
+void teardown_rb_tree()
+{
+	free_rb_tree(tree);
 }
 
 
@@ -190,32 +202,28 @@ START_TEST(test_dequeue)
 
 START_TEST(test_create_rbnode)
 {
-	RBNode *node = rb_new_node("a", NULL, RED);
+	RBNode *node = malloc(sizeof(*node));
+	init_rb_node(node, "a", NULL, RED);
 	ck_assert_int_eq(1, node->n);
 	ck_assert_int_eq(RED, node->colour);
 	ck_assert_str_eq("a", node->key);
 	ck_assert_ptr_null(node->val);
 	ck_assert_ptr_null(node->left);
 	ck_assert_ptr_null(node->right);
-	rb_free_all_nodes(node);
+	free_rb_nodes(node);
 } END_TEST
 
 
 START_TEST(test_rb_put_lt)
 {
-	RedBlackTree *tree = malloc(sizeof(*tree));
-	rb_init_tree(tree);
 	rb_put(tree, "n", NULL);
 	rb_put(tree, "c", NULL);
 	ck_assert_str_eq("n", tree->root->key);
-	rb_free_tree(tree);
 } END_TEST
 
 
 START_TEST(test_rb_insertions)
 {
-	RedBlackTree *tree = malloc(sizeof(*tree));
-	rb_init_tree(tree);
 	rb_put(tree, "j", NULL);
 	ck_assert_int_eq(BLACK, tree->root->colour);
 
@@ -243,8 +251,6 @@ START_TEST(test_rb_insertions)
 	ck_assert_str_eq("p", tree->root->right->key);
 	ck_assert_str_eq("n", tree->root->left->right->key);
 	ck_assert_int_eq(RED, tree->root->left->colour);
-
-	rb_free_tree(tree);
 } END_TEST
 
 
@@ -261,6 +267,7 @@ Suite *container_suite(void) {
 
 	tcase_add_checked_fixture(tc_linked_list, setup_linked_list, teardown_linked_list);
 	tcase_add_checked_fixture(tc_queue, setup_queue, teardown_queue);
+	tcase_add_checked_fixture(tc_rb_tree, setup_rb_tree, teardown_rb_tree);
 
 	tcase_add_test(tc_linked_list, test_init_list);
 	tcase_add_test(tc_linked_list, test_make_node);

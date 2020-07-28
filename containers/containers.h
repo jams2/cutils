@@ -97,14 +97,15 @@ typedef struct _rbtree {
 	RBNode *root;
 } RedBlackTree;
 
-RBNode *rb_new_node(char *key, void *val, enum colour colour);
-void rb_init_tree(RedBlackTree *tree);
-void rb_free_tree(RedBlackTree *tree);
-void rb_free_all_nodes(RBNode *node);
-void rb_free_node(RBNode *node);
+void init_rb_node(RBNode *node, char *key, void *val, enum colour colour);
+void init_rb_tree(RedBlackTree *tree);
+void free_rb_tree(RedBlackTree *tree);
+void free_rb_nodes(RBNode *node);
+void free_rb_node(RBNode *node);
 RBNode *rb_l_rot(RBNode *node);
 RBNode *rb_r_rot(RBNode *node);
 void rb_put(RedBlackTree *tree, char *key, void *val);
+void *rb_get(RedBlackTree *tree, char *key);
 RBNode *rb_put_node(RBNode *node, char *key, void *val);
 void rb_flip_colours(RBNode *node);
 
