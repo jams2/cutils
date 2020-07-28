@@ -109,15 +109,14 @@ void *remove_node(LinkedList *list, int index, int *list_err)
 	} else if (index == 0) {
 		return remove_head(list, list_err);
 	}
-	ListNode *node = list->head->next;
-	ListNode *prev = list->head;
-	for (int i = 1; i != index; ++i) {
-		prev = node;
-		node = node->next;
-	}
-	prev->next = node->next;
-	void *item = node->item;
-	free(node);
+	ListNode *tmp;
+	ListNode *cur = list->head;
+	for (int i = 1; i != index; ++i, cur = cur->next)
+		;
+	tmp = cur->next;
+	cur->next = tmp->next;
+	void *item = tmp->item;
+	free(tmp);
 	--list->len;
 	return item;
 }

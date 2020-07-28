@@ -91,7 +91,6 @@ RBNode *rb_put_node(RBNode *node, char *key, void *val)
 	if (IS_RED(node->right) && !IS_RED(node->left))
 		node = rb_l_rot(node);
 	if (IS_RED(node->left) && IS_RED(node->left->left))
-		/* short circuit prevents dereferencing null */
 		node = rb_r_rot(node);
 	if (IS_RED(node->left) && IS_RED(node->right))
 		rb_flip_colours(node);
@@ -102,6 +101,7 @@ RBNode *rb_put_node(RBNode *node, char *key, void *val)
 
 void rb_flip_colours(RBNode *node)
 {
-	node->colour = RED;
-	node->left->colour = node->right->colour = BLACK;
+	node->colour ^= 1;
+	node->left->colour ^= 1;
+	node->right->colour ^= 1;
 }

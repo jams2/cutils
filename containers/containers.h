@@ -83,7 +83,7 @@ void pop_generic(Stack *s, int *err);
 #define RB_SIZE(node) ((node) == NULL ? 0 : (node)->n)
 #define IS_RED(node) ((node) == NULL ? 0 : (node)->colour == RED)
 
-enum colour { RED, BLACK };
+enum colour { RED = 1, BLACK = 0 };
 
 typedef struct _rbnode {
 	char *key;
