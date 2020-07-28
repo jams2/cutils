@@ -66,6 +66,8 @@ void init_search_arrays(Digraph *g, int *visited, int *edge_to)
 	}
 }
 
+void dfs_all_src(Digraph*g, int *visited, int *edge_to)
+
 void dfs(Digraph *g, int src, int *visited, int *edge_to)
 {
 	ListNode *cur = g->vertices[src]->head;
@@ -80,8 +82,6 @@ void dfs(Digraph *g, int src, int *visited, int *edge_to)
 		cur = cur->next;
 	}
 }
-
-int cycle_length(Digraph *g, int src,)
 
 void bfs(Digraph *g, int src, int *visited, int *edge_to)
 {

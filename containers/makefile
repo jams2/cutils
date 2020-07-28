@@ -1,7 +1,7 @@
 LIBDIR = $$HOME/.local/lib
-REQUIRES = stack.c linked-list.c queue.c containers.h
-SRC_FILES = stack.c linked-list.c queue.c
-OBJ_FILES = stack.o linked-list.o queue.o
+REQUIRES = rbtree.c stack.c linked-list.c queue.c containers.h
+SRC_FILES = stack.c linked-list.c queue.c rbtree.c
+OBJ_FILES = stack.o linked-list.o queue.o rbtree.o
 CHECK_ARGS = -lcheck -lm -lpthread -lrt
 
 containers: $(REQUIRES)

@@ -188,17 +188,78 @@ START_TEST(test_dequeue)
 } END_TEST
 
 
+START_TEST(test_create_rbnode)
+{
+	RBNode *node = rb_new_node("a", NULL, RED);
+	ck_assert_int_eq(1, node->n);
+	ck_assert_int_eq(RED, node->colour);
+	ck_assert_str_eq("a", node->key);
+	ck_assert_ptr_null(node->val);
+	ck_assert_ptr_null(node->left);
+	ck_assert_ptr_null(node->right);
+	rb_free_all_nodes(node);
+} END_TEST
+
+
+START_TEST(test_rb_put_lt)
+{
+	RedBlackTree *tree = malloc(sizeof(*tree));
+	rb_init_tree(tree);
+	rb_put(tree, "n", NULL);
+	rb_put(tree, "c", NULL);
+	ck_assert_str_eq("n", tree->root->key);
+	rb_free_tree(tree);
+} END_TEST
+
+
+START_TEST(test_rb_insertions)
+{
+	RedBlackTree *tree = malloc(sizeof(*tree));
+	rb_init_tree(tree);
+	rb_put(tree, "j", NULL);
+	ck_assert_int_eq(BLACK, tree->root->colour);
+
+	/* e should be red and left of root */
+	rb_put(tree, "e", NULL);
+	ck_assert_str_eq("j", tree->root->key);
+	ck_assert_int_eq(RED, tree->root->left->colour);
+
+	/* p goes right, flip colours */
+	rb_put(tree, "p", NULL);
+	ck_assert_str_eq("p", tree->root->right->key);
+	ck_assert_int_eq(BLACK, tree->root->left->colour);
+	ck_assert_int_eq(BLACK, tree->root->right->colour);
+
+	/* p becomes a 2-node */
+	rb_put(tree, "o", NULL);
+	ck_assert_str_eq("p", tree->root->right->key);
+	ck_assert_str_eq("o", tree->root->right->left->key);
+	ck_assert_int_eq(RED, tree->root->right->left->colour);
+
+	/* inserting n causes a few rotations */
+	rb_put(tree, "n", NULL);
+	ck_assert_str_eq("o", tree->root->key);
+	ck_assert_str_eq("j", tree->root->left->key);
+	ck_assert_str_eq("p", tree->root->right->key);
+	ck_assert_str_eq("n", tree->root->left->right->key);
+	ck_assert_int_eq(RED, tree->root->left->colour);
+
+	rb_free_tree(tree);
+} END_TEST
+
+
 Suite *container_suite(void) {
 	Suite *s;
 	TCase *tc_linked_list;
 	TCase *tc_queue;
+	TCase *tc_rb_tree;
 
 	s = suite_create("Containers");
 	tc_linked_list = tcase_create("Linked_list");
 	tc_queue = tcase_create("Queue");
+	tc_rb_tree = tcase_create("RB Tree");
 
 	tcase_add_checked_fixture(tc_linked_list, setup_linked_list, teardown_linked_list);
-
 	tcase_add_checked_fixture(tc_queue, setup_queue, teardown_queue);
 
 	tcase_add_test(tc_linked_list, test_init_list);
@@ -218,6 +279,11 @@ Suite *container_suite(void) {
 	tcase_add_test(tc_queue, test_enqueue);
 	tcase_add_test(tc_queue, test_dequeue);
 	suite_add_tcase(s, tc_queue);
+
+	tcase_add_test(tc_rb_tree, test_create_rbnode);
+	tcase_add_test(tc_rb_tree, test_rb_put_lt);
+	tcase_add_test(tc_rb_tree, test_rb_insertions);
+	suite_add_tcase(s, tc_rb_tree);
 
 	return s;
 }
