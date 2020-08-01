@@ -1,7 +1,7 @@
 LIBDIR = $$HOME/.local/lib
-REQUIRES = rbtree.c stack.c linked-list.c queue.c containers.h
-SRC_FILES = stack.c linked-list.c queue.c rbtree.c
-OBJ_FILES = stack.o linked-list.o queue.o rbtree.o
+REQUIRES = hashtable.c rbtree.c stack.c linked-list.c queue.c containers.h
+SRC_FILES = hashtable.c stack.c linked-list.c queue.c rbtree.c
+OBJ_FILES = hashtable.c stack.o linked-list.o queue.o rbtree.o
 CHECK_ARGS = -lcheck -lm -lpthread -lrt
 
 containers: $(REQUIRES)
@@ -17,6 +17,13 @@ check: $(REQUIRES)
 
 memcheck: check_containers
 	CK_FORK=no valgrind -s --leak-check=full ./check_containers
+
+hashtable: hashtable.c containers.h
+	gcc -Wall -Werror -o hashtable hashtable.c
+	echo ""
+	./hashtable
+	echo ""
+	rm hashtable
 
 clean:
 	rm *.o

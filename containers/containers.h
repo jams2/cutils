@@ -1,5 +1,6 @@
 #ifndef _CONTAINERS_H
 #define _CONTAINERS_H
+#include <limits.h>
 
 #define node_int_val(node_ptr) (*(int *)node_ptr->item)
 
@@ -76,7 +77,7 @@ void push_generic(Stack *s, void *val, int *err);
 void pop_generic(Stack *s, int *err);
 
 
-/* Red Black Tree
+/* Red-Black Tree
  * From Algorithms 4th Ed., Sedgewick & Wayne.
  */
 
@@ -102,11 +103,36 @@ void init_rb_tree(RedBlackTree *tree);
 void free_rb_tree(RedBlackTree *tree);
 void free_rb_nodes(RBNode *node);
 void free_rb_node(RBNode *node);
-RBNode *rb_l_rot(RBNode *node);
-RBNode *rb_r_rot(RBNode *node);
+RBNode *rb_rotate_l(RBNode *node);
+RBNode *rb_rotate_r(RBNode *node);
 void rb_put(RedBlackTree *tree, char *key, void *val);
 void *rb_get(RedBlackTree *tree, char *key);
 RBNode *rb_put_node(RBNode *node, char *key, void *val);
 void rb_flip_colours(RBNode *node);
+RBNode *rb_move_red_left(RBNode *node);
+void rb_delete_min(RedBlackTree *tree);
+RBNode *rb_del_min(RBNode *node);
+RBNode *rb_balance(RBNode *h);
 
-#endif
+
+/* linear probing hashtable */
+
+#define HT_INITIAL 8
+#define POSITIVE(x) (x & (INT_MAX))
+
+typedef struct _hashtable {
+	int n_keys;
+	int size;
+	char **keys;
+	void **vals;
+} HashTable;
+
+void ht_init(HashTable *ht);
+int ht_hash(char *key);
+int ht_insertion_index(HashTable *ht, char *key);
+int ht_get(HashTable *ht, char *key);
+int ht_put(HashTable *ht, char *key, void *val);
+int ht_del(HashTable *ht, char *key);
+int ht_resize(HashTable *ht, int n);
+
+#endif //_CONTAINERS_H

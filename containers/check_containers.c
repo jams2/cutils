@@ -2,10 +2,25 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <check.h>
+#include <assert.h>
 
 LinkedList *list;
 Queue *queue;
 RedBlackTree *tree;
+HashTable *ht;
+
+void setup_hashtable()
+{
+	ht = malloc(sizeof(*ht));
+	ht_init(ht);
+}
+
+void teardown_hashtable()
+{
+	free(ht->vals);
+	free(ht->keys);
+	free(ht);
+}
 
 void setup_linked_list()
 {
@@ -200,57 +215,92 @@ START_TEST(test_dequeue)
 } END_TEST
 
 
-START_TEST(test_create_rbnode)
+/* START_TEST(test_create_rbnode) */
+/* { */
+/* 	RBNode *node = malloc(sizeof(*node)); */
+/* 	init_rb_node(node, "a", NULL, RED); */
+/* 	ck_assert_int_eq(1, node->n); */
+/* 	ck_assert_int_eq(RED, node->colour); */
+/* 	ck_assert_str_eq("a", node->key); */
+/* 	ck_assert_ptr_null(node->val); */
+/* 	ck_assert_ptr_null(node->left); */
+/* 	ck_assert_ptr_null(node->right); */
+/* 	free_rb_nodes(node); */
+/* } END_TEST */
+
+
+/* START_TEST(test_rb_put_lt) */
+/* { */
+/* 	rb_put(tree, "n", NULL); */
+/* 	rb_put(tree, "c", NULL); */
+/* 	ck_assert_str_eq("n", tree->root->key); */
+/* } END_TEST */
+
+
+/* START_TEST(test_rb_insertions) */
+/* { */
+/* 	rb_put(tree, "j", NULL); */
+/* 	ck_assert_int_eq(BLACK, tree->root->colour); */
+
+/* 	/\* e should be red and left of root *\/ */
+/* 	rb_put(tree, "e", NULL); */
+/* 	ck_assert_str_eq("j", tree->root->key); */
+/* 	ck_assert_int_eq(RED, tree->root->left->colour); */
+
+/* 	/\* p goes right, flip colours *\/ */
+/* 	rb_put(tree, "p", NULL); */
+/* 	ck_assert_str_eq("p", tree->root->right->key); */
+/* 	ck_assert_int_eq(BLACK, tree->root->left->colour); */
+/* 	ck_assert_int_eq(BLACK, tree->root->right->colour); */
+
+/* 	/\* p becomes a 2-node *\/ */
+/* 	rb_put(tree, "o", NULL); */
+/* 	ck_assert_str_eq("p", tree->root->right->key); */
+/* 	ck_assert_str_eq("o", tree->root->right->left->key); */
+/* 	ck_assert_int_eq(RED, tree->root->right->left->colour); */
+
+/* 	/\* inserting n causes a few rotations *\/ */
+/* 	rb_put(tree, "n", NULL); */
+/* 	ck_assert_str_eq("o", tree->root->key); */
+/* 	ck_assert_str_eq("j", tree->root->left->key); */
+/* 	ck_assert_str_eq("p", tree->root->right->key); */
+/* 	ck_assert_str_eq("n", tree->root->left->right->key); */
+/* 	ck_assert_int_eq(RED, tree->root->left->colour); */
+/* } END_TEST */
+
+
+START_TEST(test_hash_func_equal)
 {
-	RBNode *node = malloc(sizeof(*node));
-	init_rb_node(node, "a", NULL, RED);
-	ck_assert_int_eq(1, node->n);
-	ck_assert_int_eq(RED, node->colour);
-	ck_assert_str_eq("a", node->key);
-	ck_assert_ptr_null(node->val);
-	ck_assert_ptr_null(node->left);
-	ck_assert_ptr_null(node->right);
-	free_rb_nodes(node);
+	char *key = "Hello, world";
+	ck_assert_int_eq(ht_hash(key), ht_hash(key));
 } END_TEST
 
 
-START_TEST(test_rb_put_lt)
+START_TEST(test_hash_func_value_dependant)
 {
-	rb_put(tree, "n", NULL);
-	rb_put(tree, "c", NULL);
-	ck_assert_str_eq("n", tree->root->key);
+	char *k1 = "Hello";
+	char *k2 = "Hello";
+	ck_assert_int_eq(ht_hash(k1), ht_hash(k2));
 } END_TEST
 
 
-START_TEST(test_rb_insertions)
+START_TEST(test_ht_put)
 {
-	rb_put(tree, "j", NULL);
-	ck_assert_int_eq(BLACK, tree->root->colour);
+	int val = 3;
+	ht_put(ht, "key1", (void *) &val);
+	int i = ht_hash("key1") % ht->size;
+	ck_assert_int_eq(val, *(int*) ht->vals[i]);
+} END_TEST
 
-	/* e should be red and left of root */
-	rb_put(tree, "e", NULL);
-	ck_assert_str_eq("j", tree->root->key);
-	ck_assert_int_eq(RED, tree->root->left->colour);
 
-	/* p goes right, flip colours */
-	rb_put(tree, "p", NULL);
-	ck_assert_str_eq("p", tree->root->right->key);
-	ck_assert_int_eq(BLACK, tree->root->left->colour);
-	ck_assert_int_eq(BLACK, tree->root->right->colour);
-
-	/* p becomes a 2-node */
-	rb_put(tree, "o", NULL);
-	ck_assert_str_eq("p", tree->root->right->key);
-	ck_assert_str_eq("o", tree->root->right->left->key);
-	ck_assert_int_eq(RED, tree->root->right->left->colour);
-
-	/* inserting n causes a few rotations */
-	rb_put(tree, "n", NULL);
-	ck_assert_str_eq("o", tree->root->key);
-	ck_assert_str_eq("j", tree->root->left->key);
-	ck_assert_str_eq("p", tree->root->right->key);
-	ck_assert_str_eq("n", tree->root->left->right->key);
-	ck_assert_int_eq(RED, tree->root->left->colour);
+START_TEST(test_ht_resizes)
+{
+	ht_put(ht, "key1", NULL);
+	ht_put(ht, "key2", NULL);
+	ht_put(ht, "key3", NULL);
+	ht_put(ht, "key4", NULL);
+	ht_put(ht, "key5", NULL);
+	ck_assert_int_eq(16, ht->size);
 } END_TEST
 
 
@@ -259,15 +309,18 @@ Suite *container_suite(void) {
 	TCase *tc_linked_list;
 	TCase *tc_queue;
 	TCase *tc_rb_tree;
+	TCase *tc_hashtable;
 
 	s = suite_create("Containers");
 	tc_linked_list = tcase_create("Linked_list");
 	tc_queue = tcase_create("Queue");
 	tc_rb_tree = tcase_create("RB Tree");
+	tc_hashtable = tcase_create("Hashtable");
 
 	tcase_add_checked_fixture(tc_linked_list, setup_linked_list, teardown_linked_list);
 	tcase_add_checked_fixture(tc_queue, setup_queue, teardown_queue);
 	tcase_add_checked_fixture(tc_rb_tree, setup_rb_tree, teardown_rb_tree);
+	tcase_add_checked_fixture(tc_hashtable, setup_hashtable, teardown_hashtable);
 
 	tcase_add_test(tc_linked_list, test_init_list);
 	tcase_add_test(tc_linked_list, test_make_node);
@@ -287,10 +340,16 @@ Suite *container_suite(void) {
 	tcase_add_test(tc_queue, test_dequeue);
 	suite_add_tcase(s, tc_queue);
 
-	tcase_add_test(tc_rb_tree, test_create_rbnode);
-	tcase_add_test(tc_rb_tree, test_rb_put_lt);
-	tcase_add_test(tc_rb_tree, test_rb_insertions);
-	suite_add_tcase(s, tc_rb_tree);
+	tcase_add_test(tc_hashtable, test_hash_func_value_dependant);
+	tcase_add_test(tc_hashtable, test_hash_func_equal);
+	tcase_add_test(tc_hashtable, test_ht_put);
+	tcase_add_test(tc_hashtable, test_ht_resizes);
+	suite_add_tcase(s, tc_hashtable);
+
+	/* tcase_add_test(tc_rb_tree, test_create_rbnode); */
+	/* tcase_add_test(tc_rb_tree, test_rb_put_lt); */
+	/* tcase_add_test(tc_rb_tree, test_rb_insertions); */
+	/* suite_add_tcase(s, tc_rb_tree); */
 
 	return s;
 }
