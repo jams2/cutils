@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
-#include "containers.h"
+#include "linked-list.h"
+#include "containers-common.h"
 
 void init_list(LinkedList *list, int item_size)
 {

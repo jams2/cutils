@@ -1,15 +1,15 @@
 #include <stdlib.h>
 #include <string.h>
-#include "containers.h"
+#include "rbtree.h"
 
 
-void init_rb_node(RBNode *node, char *key, void *val, enum colour colour)
+void init_rb_node(RBNode *h, char *key, void *val, enum colour colour)
 {
-	node->key = key;
-	node->val = val;
-	node->left = node->right = NULL;
-	node->n = 1;
-	node->colour = colour;
+	h->key = key;
+	h->val = val;
+	h->left = h->right = NULL;
+	h->n = 1;
+	h->colour = colour;
 }
 
 void init_rb_tree(RedBlackTree *tree)
@@ -23,41 +23,41 @@ void free_rb_tree(RedBlackTree *tree)
 	free(tree);
 }
 
-void free_rb_nodes(RBNode *node)
+void free_rb_nodes(RBNode *h)
 {
-	if (node == NULL)
+	if (h == NULL)
 		return;
-	free_rb_nodes(node->right);
-	free_rb_nodes(node->left);
-	free(node);
+	free_rb_nodes(h->right);
+	free_rb_nodes(h->left);
+	free(h);
 }
 
-void free_rb_node(RBNode *node)
+void free_rb_node(RBNode *h)
 {
-	free(node);
+	free(h);
 }
 
-RBNode *rb_l_rot(RBNode *node)
+RBNode *rb_rotate_l(RBNode *h)
 {
-	RBNode *tmp = node->right;
-	node->right = tmp->left;
-	tmp->left = node;
-	tmp->colour = node->colour;
-	node->colour = RED;
-	tmp->n = node->n;
-	node->n = 1 + RB_SIZE(node->left) + RB_SIZE(node->right);
+	RBNode *tmp = h->right;
+	h->right = tmp->left;
+	tmp->left = h;
+	tmp->colour = h->colour;
+	h->colour = RED;
+	tmp->n = h->n;
+	h->n = 1 + RB_SIZE(h->left) + RB_SIZE(h->right);
 	return tmp;
 }
 
-RBNode *rb_r_rot(RBNode *node)
+RBNode *rb_rotate_r(RBNode *h)
 {
-	RBNode *tmp = node->left;
-	node->left = tmp->right;
-	tmp->right = node;
-	tmp->colour = node->colour;
-	node->colour = RED;
-	tmp->n = node->n;
-	node->n = 1 + RB_SIZE(node->left) + RB_SIZE(node->right);
+	RBNode *tmp = h->left;
+	h->left = tmp->right;
+	tmp->right = h;
+	tmp->colour = h->colour;
+	h->colour = RED;
+	tmp->n = h->n;
+	h->n = 1 + RB_SIZE(h->left) + RB_SIZE(h->right);
 	return tmp;
 }
 
@@ -73,35 +73,81 @@ void *rb_get(RedBlackTree *tree, char *key)
 	return result;
 }
 
-RBNode *rb_put_node(RBNode *node, char *key, void *val)
+RBNode *rb_put_node(RBNode *h, char *key, void *val)
 {
-	if (node == NULL) {
+	if (h == NULL) {
 		RBNode *node = malloc(sizeof(*node));
 		init_rb_node(node, key, val, RED);
-		return node;
+		return h;
 	}
 	int cmp;
-	if ((cmp = strcmp(key, node->key)) < 0)
-		node->left = rb_put_node(node->left, key, val);
+	if ((cmp = strcmp(key, h->key)) < 0)
+		h->left = rb_put_node(h->left, key, val);
 	else if (cmp > 0)
-		node->right = rb_put_node(node->right, key, val);
+		h->right = rb_put_node(h->right, key, val);
 	else
-		node->val = val;
+		h->val = val;
 
-	if (IS_RED(node->right) && !IS_RED(node->left))
-		node = rb_l_rot(node);
-	if (IS_RED(node->left) && IS_RED(node->left->left))
-		node = rb_r_rot(node);
-	if (IS_RED(node->left) && IS_RED(node->right))
-		rb_flip_colours(node);
+	if (IS_RED(h->right) && !IS_RED(h->left))
+		h = rb_rotate_l(h);
+	if (IS_RED(h->left) && IS_RED(h->left->left))
+		h = rb_rotate_r(h);
+	if (IS_RED(h->left) && IS_RED(h->right))
+		rb_flip_colours(h);
 
-	node->n = 1 + RB_SIZE(node->left) + RB_SIZE(node->right);
-	return node;
+	h->n = 1 + RB_SIZE(h->left) + RB_SIZE(h->right);
+	return h;
 }
 
-void rb_flip_colours(RBNode *node)
+void rb_flip_colours(RBNode *h)
 {
-	node->colour ^= 1;
-	node->left->colour ^= 1;
-	node->right->colour ^= 1;
+	h->colour ^= 1;
+	h->left->colour ^= 1;
+	h->right->colour ^= 1;
+}
+
+/*
+ * Assume node is red, node->left and node->left->left are black,
+ * make h->left or one of its children red.
+ */
+RBNode *rb_move_red_left(RBNode *h)
+{
+	rb_flip_colours(h);
+	if (IS_RED(h->right->left)) {
+		h->right = rb_rotate_r(h->right);
+		h = rb_rotate_l(h);
+		rb_flip_colours(h);
+	}
+	return h;
+}
+
+void rb_delete_min(RedBlackTree *tree)
+{
+	if (!IS_RED(tree->root->left) && !IS_RED(tree->root->right))
+		tree->root->colour = RED;
+	tree->root = rb_del_min(tree->root);
+	if (tree->root->n > 0)
+		tree->root->colour = BLACK;
+}
+
+RBNode *rb_del_min(RBNode *h)
+{
+	if (h->left == NULL)
+		return NULL;
+	if (!IS_RED(h->left) && !IS_RED(h->right))
+		h = rb_move_red_left(h);
+	h->left = rb_del_min(h->left);
+	return rb_balance(h);
+}
+
+RBNode *rb_balance(RBNode *h)
+{
+	if (IS_RED(h->right))
+		h = rb_rotate_l(h);
+	if (IS_RED(h->left) && IS_RED(h->left->left))
+		h = rb_rotate_r(h);
+	if (IS_RED(h->left) && IS_RED(h->right))
+		rb_flip_colours(h);
+	h->n = 1 + RB_SIZE(h->left) + RB_SIZE(h->right);
+	return h;
 }

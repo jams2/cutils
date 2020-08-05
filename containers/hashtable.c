@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "containers.h"
+#include "hashtable.h"
 
 void ht_init(HashTable *ht)
 {
@@ -26,7 +26,8 @@ int ht_hash(char *key)
 {
 	int hash = 0;
 	for (int i = 0; key[i] != '\0'; ++i)
-		hash += (31 * hash) + key[i];
+		hash += ((((31%8) * (hash%8))%8) + (key[i]%8)) % 8;
+	printf("hash %d\n", hash);
 	return POSITIVE(hash);
 }
 

@@ -296,10 +296,24 @@ START_TEST(test_ht_put)
 START_TEST(test_ht_resizes)
 {
 	ht_put(ht, "key1", NULL);
-	ht_put(ht, "key2", NULL);
-	ht_put(ht, "key3", NULL);
-	ht_put(ht, "key4", NULL);
+	ht_put(ht, "dey2", NULL);
+	ht_put(ht, "fey3", NULL);
+	ht_put(ht, "aey4", NULL);
+	for (int i = 0; i < ht->size; ++i) {
+		if (ht->keys[i] == NULL)
+			printf(" . ");
+		else
+			printf(" %s ", ht->keys[i]);
+	}
+	printf("\n");
 	ht_put(ht, "key5", NULL);
+	for (int i = 0; i < ht->size; ++i) {
+		if (ht->keys[i] == NULL)
+			printf(" . ");
+		else
+			printf(" %s ", ht->keys[i]);
+	}
+	printf("\n");
 	ck_assert_int_eq(16, ht->size);
 } END_TEST
 

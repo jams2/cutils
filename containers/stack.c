@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
-#include "containers.h"
+#include "stack.h"
+#include "containers-common.h"
 
 
 void init_int_stack(IntStack *s, int size)
