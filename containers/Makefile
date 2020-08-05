@@ -1,8 +1,8 @@
 LIBDIR = $$HOME/.local/lib
-HEADERS = stack.h linked-list.h containers-common.h stack.h queue.h rbtree.h hashtable.h
-SRC_FILES = hashtable.c stack.c linked-list.c queue.c rbtree.c
+HEADERS = stack.h linked-list.h containers-common.h stack.h queue.h rbtree.h hashtable.h siphash.h
+SRC_FILES = hashtable.c stack.c linked-list.c queue.c rbtree.c siphash.c
 REQUIRES = $(HEADERS) $(SRC_FILES)
-OBJ_FILES = hashtable.c stack.o linked-list.o queue.o rbtree.o
+OBJ_FILES = hashtable.o stack.o linked-list.o queue.o rbtree.o siphash.o
 CHECK_ARGS = -lcheck -lm -lpthread -lrt
 
 containers: $(REQUIRES) containers.h
@@ -10,13 +10,13 @@ containers: $(REQUIRES) containers.h
 	gcc -shared -o $(LIBDIR)/libcontainers.so $(OBJ_FILES)
 	cp containers.h $(LIBDIR)
 
-configure: $(HEADERS)
+containers.h: $(HEADERS)
 	echo "#ifndef containers_h_" > containers.h
 	echo "#define containers_h_" >> containers.h
 	cat $(HEADERS) >> containers.h
 	echo "#endif" >> containers.h
 
-check: $(REQUIRES) containers.h
+check: containers containers.h
 	gcc -c -Wall -Werror -fpic $(SRC_FILES)
 	gcc -c -Wall -Werror check_containers.c
 	gcc $(OBJ_FILES) check_containers.o $(CHECK_ARGS) -o check_containers

@@ -157,25 +157,54 @@ RBNode *rb_balance(RBNode *h);
 
 #endif
 #ifndef hashtable_h_
-#include <limits.h>
 #define hashtable_h_
-#define HT_INITIAL 8
+#include <limits.h>
+#include "siphash.h"
+#define HT_INITIAL 16
 #define POSITIVE(x) (x & (INT_MAX))
 
 typedef struct _hashtable {
 	int n_keys;
 	int size;
+	int sizemask;
 	char **keys;
 	void **vals;
 } HashTable;
 
 void ht_init(HashTable *ht);
-int ht_hash(char *key);
+uint64 ht_hash(char *key);
 int ht_insertion_index(HashTable *ht, char *key);
 int ht_get(HashTable *ht, char *key);
 int ht_put(HashTable *ht, char *key, void *val);
 int ht_del(HashTable *ht, char *key);
 int ht_resize(HashTable *ht, int n);
+
+#endif
+#ifndef siphash_h_
+#define siphash_h_
+
+#include <sys/types.h>
+typedef u_int64_t uint64;
+
+#define SIP_ROT(x, b) x = (x << b) | (x >> (64 - b))
+
+#define SIP_ROUND				\
+	v0 += v1;				\
+	v2 += v3;				\
+	SIP_ROT(v1,13);				\
+	SIP_ROT(v3,16);				\
+	v1 ^= v0;				\
+	v3 ^= v2;				\
+	SIP_ROT(v0,32);				\
+	v2 += v1;				\
+	v0 += v3;				\
+	SIP_ROT(v1,17);				\
+	SIP_ROT(v3,21);				\
+	v1 ^= v2;				\
+	v3 ^= v0;				\
+	SIP_ROT(v2,32);
+
+uint64 siphash(const unsigned char *in, unsigned long long inlen, const unsigned char *k);
 
 #endif
 #endif
