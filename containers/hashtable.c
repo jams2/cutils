@@ -96,9 +96,46 @@ int ht_put(HashTable *ht, char *key, void *val)
 
 int ht_del(HashTable *ht, char *key)
 {
-	int i = ht_get_index(ht, key);
-	if (i == -1)
+	if (ht->n_keys < 1 || key == NULL)
 		return -1;
+
+	/* First get the index of the key. We need to hang on to perturb
+	 * and i so we can rehash the rest of the cluster if necessary.
+	 */
+	uint64 i, perturb;
+	i = perturb = ht_hash(key);
+	ht_next_index(ht, &i, &perturb);
+	while (ht->keys[i] != NULL && strcmp(ht->keys[i], key) != 0)
+		ht_next_index(ht, &i, &perturb);
+	if (ht->keys[i] == NULL)
+		return -1;
+
+	ht->keys[i] = NULL;
+	if (ht->vals[i] != NULL) {
+		free(ht->vals[i]);
+		ht->vals[i] = NULL;
+	}
+	ht->n_keys -= 1;
+
+	/* Rehash if there's a cluster. We need to follow the chain
+	 * created by the insertion recurrence.
+	 */
+	char *k;
+	void *v;
+	ht_next_index(ht, &i, &perturb);
+	while (ht->keys[i] != NULL) {
+		k = ht->keys[i];
+		v = (void *) ht->vals[i];
+		ht->keys[i] = NULL;
+		ht->vals[i] = NULL;
+		ht_put(ht, k, v);
+		ht_next_index(ht, &i, &perturb);
+	}
+
+	/* Half the size if it's 12.5% full or less (Sedgewick). */
+	if (ht->n_keys > 0 && ht->n_keys <= ht->size / 8)
+		ht_resize(ht, ht->size/2);
+
 	return 0;
 }
 

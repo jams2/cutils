@@ -17,11 +17,11 @@ containers.h: $(HEADERS)
 	echo "#endif" >> containers.h
 
 check: containers containers.h
-	gcc -c -Wall -Werror -fpic $(SRC_FILES)
-	gcc -c -Wall -Werror check_containers.c
-	gcc -c -Wall -Werror check_hashtable.c
-	gcc $(OBJ_FILES) check_containers.o $(CHECK_ARGS) -o check_containers
-	gcc $(OBJ_FILES) check_hashtable.o $(CHECK_ARGS) -o check_hashtable
+	gcc -g -c -Wall -Werror -fpic $(SRC_FILES)
+	gcc -g -c -Wall -Werror check_containers.c
+	gcc -g -c -Wall -Werror check_hashtable.c
+	gcc -g $(OBJ_FILES) check_containers.o $(CHECK_ARGS) -o check_containers
+	gcc -g $(OBJ_FILES) check_hashtable.o $(CHECK_ARGS) -o check_hashtable
 	./check_containers
 	./check_hashtable
 
