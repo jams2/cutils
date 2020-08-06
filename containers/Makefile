@@ -19,11 +19,15 @@ containers.h: $(HEADERS)
 check: containers containers.h
 	gcc -c -Wall -Werror -fpic $(SRC_FILES)
 	gcc -c -Wall -Werror check_containers.c
+	gcc -c -Wall -Werror check_hashtable.c
 	gcc $(OBJ_FILES) check_containers.o $(CHECK_ARGS) -o check_containers
+	gcc $(OBJ_FILES) check_hashtable.o $(CHECK_ARGS) -o check_hashtable
 	./check_containers
+	./check_hashtable
 
-memcheck: check_containers
+memcheck: check
 	CK_FORK=no valgrind -s --leak-check=full ./check_containers
+	CK_FORK=no valgrind -s --leak-check=full ./check_hashtable
 
 clean:
 	rm *.o containers.h

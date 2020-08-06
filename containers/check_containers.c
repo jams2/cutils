@@ -7,20 +7,6 @@
 LinkedList *list;
 Queue *queue;
 RedBlackTree *tree;
-HashTable *ht;
-
-void setup_hashtable()
-{
-	ht = malloc(sizeof(*ht));
-	ht_init(ht);
-}
-
-void teardown_hashtable()
-{
-	free(ht->vals);
-	free(ht->keys);
-	free(ht);
-}
 
 void setup_linked_list()
 {
@@ -269,72 +255,20 @@ START_TEST(test_dequeue)
 /* } END_TEST */
 
 
-START_TEST(test_hash_func_equal)
-{
-	char *key = "Hello, world";
-	ck_assert_int_eq(ht_hash(key), ht_hash(key));
-} END_TEST
-
-
-START_TEST(test_hash_func_value_dependant)
-{
-	char *k1 = "Hello";
-	char *k2 = "Hello";
-	ck_assert_int_eq(ht_hash(k1), ht_hash(k2));
-} END_TEST
-
-
-START_TEST(test_ht_put)
-{
-	int val = 3;
-	ht_put(ht, "key1", (void *) &val);
-	int i = ht_hash("key1") % ht->size;
-	ck_assert_int_eq(val, *(int*) ht->vals[i]);
-} END_TEST
-
-
-START_TEST(test_ht_resizes)
-{
-	ht_put(ht, "key1", NULL);
-	ht_put(ht, "dey2", NULL);
-	ht_put(ht, "fey3", NULL);
-	ht_put(ht, "aey4", NULL);
-	for (int i = 0; i < ht->size; ++i) {
-		if (ht->keys[i] == NULL)
-			printf(" . ");
-		else
-			printf(" %s ", ht->keys[i]);
-	}
-	printf("\n");
-	ht_put(ht, "key5", NULL);
-	for (int i = 0; i < ht->size; ++i) {
-		if (ht->keys[i] == NULL)
-			printf(" . ");
-		else
-			printf(" %s ", ht->keys[i]);
-	}
-	printf("\n");
-	ck_assert_int_eq(16, ht->size);
-} END_TEST
-
-
 Suite *container_suite(void) {
 	Suite *s;
 	TCase *tc_linked_list;
 	TCase *tc_queue;
 	TCase *tc_rb_tree;
-	TCase *tc_hashtable;
 
 	s = suite_create("Containers");
 	tc_linked_list = tcase_create("Linked_list");
 	tc_queue = tcase_create("Queue");
 	tc_rb_tree = tcase_create("RB Tree");
-	tc_hashtable = tcase_create("Hashtable");
 
 	tcase_add_checked_fixture(tc_linked_list, setup_linked_list, teardown_linked_list);
 	tcase_add_checked_fixture(tc_queue, setup_queue, teardown_queue);
 	tcase_add_checked_fixture(tc_rb_tree, setup_rb_tree, teardown_rb_tree);
-	tcase_add_checked_fixture(tc_hashtable, setup_hashtable, teardown_hashtable);
 
 	tcase_add_test(tc_linked_list, test_init_list);
 	tcase_add_test(tc_linked_list, test_make_node);
@@ -353,12 +287,6 @@ Suite *container_suite(void) {
 	tcase_add_test(tc_queue, test_enqueue);
 	tcase_add_test(tc_queue, test_dequeue);
 	suite_add_tcase(s, tc_queue);
-
-	tcase_add_test(tc_hashtable, test_hash_func_value_dependant);
-	tcase_add_test(tc_hashtable, test_hash_func_equal);
-	tcase_add_test(tc_hashtable, test_ht_put);
-	tcase_add_test(tc_hashtable, test_ht_resizes);
-	suite_add_tcase(s, tc_hashtable);
 
 	/* tcase_add_test(tc_rb_tree, test_create_rbnode); */
 	/* tcase_add_test(tc_rb_tree, test_rb_put_lt); */

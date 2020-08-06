@@ -20,7 +20,7 @@ typedef u_int64_t uint64;
 	SIP_ROT(v3,21);				\
 	v1 ^= v2;				\
 	v3 ^= v0;				\
-	SIP_ROT(v2,32);
+	SIP_ROT(v2,32)
 
 uint64 siphash(const unsigned char *in, unsigned long long inlen, const unsigned char *k);
 
