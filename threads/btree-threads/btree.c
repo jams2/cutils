@@ -9,7 +9,11 @@
 #include <sys/sysinfo.h>
 #include "btree.h"
 
-static int TOTAL_WORDS = 0;
+static volatile int TOTAL_WORDS = 0;
+static volatile int files_read = 0;
+static int thread_status[MAXTHREADS];
+static pthread_mutex_t cond_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t cond;
 static struct btree *TREE;
 
 struct btree *
@@ -164,7 +168,7 @@ node_destroy(struct node *k)
 }
 
 int
-get_file_names(char *basedir, char **fnames, int *fcount)
+get_file_paths(char *basedir, char **paths, int *fcount)
 {
   char *dot;
   DIR *dir;
@@ -183,10 +187,10 @@ get_file_names(char *basedir, char **fnames, int *fcount)
     if (strcasecmp(dot, FILE_EXT) != 0)
       continue;
     f_len = strlen(dir_ent->d_name) + 1;
-    if ((fnames[*fcount] = calloc(dir_len + f_len, sizeof(**fnames))) == NULL)
+    if ((paths[*fcount] = calloc(dir_len + f_len, sizeof(**paths))) == NULL)
       return -2;
-    sprintf(fnames[*fcount], "%s", basedir);
-    strcat(fnames[(*fcount)++], dir_ent->d_name);
+    sprintf(paths[*fcount], "%s", basedir);
+    strcat(paths[(*fcount)++], dir_ent->d_name);
   }
 
   closedir(dir);
@@ -194,8 +198,10 @@ get_file_names(char *basedir, char **fnames, int *fcount)
 }
 
 void *
-read_words(void *fname)
+read_words(void *arg)
 {
+  int thread_id = ((struct thread_arg *) arg)->thread_id;
+  char *fname = ((struct thread_arg *) arg)->fname;
   FILE *fp;
   char *buf = calloc(MAXBUF, sizeof(*buf));
   char c, *key;
@@ -230,47 +236,67 @@ read_words(void *fname)
   rc = 0;
   fclose(fp);
   free(buf);
+  pthread_mutex_lock(&cond_lock);
+  thread_status[thread_id] = T_READY;
+  files_read++;
+  pthread_cond_signal(&cond);
+  pthread_mutex_unlock(&cond_lock);
   pthread_exit((void *) &rc);
+}
+
+char *
+get_dir_name(char *src)
+{
+  int i;
+  char *dirname;
+  if (src[strlen(src) - 1] != '/') {
+    dirname = calloc(strlen(src) + 2, sizeof(*dirname));
+    for (i = 0; i < (int) strlen(src); ++i)
+      dirname[i] = src[i];
+    dirname[i++] = '/';
+    dirname[i] = '\0';
+  } else {
+    dirname = calloc(strlen(src) + 1, sizeof(*dirname));
+    for (i = 0; i < (int) strlen(src); ++i)
+      dirname[i] = src[i];
+    dirname[i] = '\0';
+  }
+  return dirname;
+}
+
+void
+get_file_names(char *src, char *dirname, char **paths, int *file_count)
+{
+  switch (get_file_paths(dirname, paths, file_count)) {
+  case 0: break;
+  case -1:
+    fprintf(stderr, "couldn't open %s\n", src);
+    exit(1);
+  case -2:
+    fprintf(stderr, "out of memory\n");
+    exit(1);
+  }
 }
 
 int
 main(int argc, char *argv[])
 {
-  char *fnames[MAXFILES];
-  char *dirname;
-  int i, file_count = 0;
+  char *paths[MAXFILES];
+  int i, files_assigned, file_count = 0;
   struct timespec starttime;
   struct timespec endtime;
+  pthread_t thread[MAXTHREADS];
+  struct thread_arg thread_arg[MAXTHREADS];
+  int thread_err;
 
   if (argc != 2) {
     fprintf(stderr, "usage: btree DIRECTORY\n");
     exit(1);
   }
 
-  if (argv[1][strlen(argv[1]) - 1] != '/') {
-    dirname = calloc(strlen(argv[1]) + 2, sizeof(*dirname));
-    for (i = 0; i < (int) strlen(argv[1]); ++i)
-      dirname[i] = argv[1][i];
-    dirname[i++] = '/';
-    dirname[i] = '\0';
-  } else {
-    dirname = calloc(strlen(argv[1]) + 1, sizeof(*dirname));
-    for (i = 0; i < (int) strlen(argv[1]); ++i)
-      dirname[i] = argv[1][i];
-    dirname[i] = '\0';
-  }
+  char *dirname = get_dir_name(argv[1]);
 
-  printf("system has %d cpus\n", get_nprocs());
-
-  switch (get_file_names(dirname, fnames, &file_count)) {
-  case 0: break;
-  case -1:
-    fprintf(stderr, "couldn't open %s\n", argv[1]);
-    exit(1);
-  case -2:
-    fprintf(stderr, "out of memory\n");
-    exit(1);
-  }
+  get_file_names(argv[1], dirname, paths, &file_count);
 
   if (file_count == 0) {
     printf("no .%s files in %s\n", FILE_EXT, argv[1]);
@@ -282,16 +308,37 @@ main(int argc, char *argv[])
     exit(1);
   }
 
-  pthread_t thread[file_count];
+  for (i = 0; i < MAXTHREADS; ++i) {
+    thread_status[i] = T_READY;
+    thread_arg[i].thread_id = i;
+  }
 
   if (clock_gettime(CLOCK_REALTIME, &starttime) != 0)
     exit(errno);
-  for (i = 0; i < file_count; ++i) {
-    assert(pthread_create(&thread[i], NULL, read_words, fnames[i]) == 0);
+
+  for (files_assigned = 0, i = 0; i < MAXTHREADS && files_read < file_count; ++i) {
+    thread_arg[i].fname = paths[files_assigned++];
+    thread_status[i] = T_BUSY;
+    if ((thread_err = pthread_create(&thread[i], NULL, read_words, &thread_arg[i])) != 0) {
+      fprintf(stderr, "couldn't create thread\n");
+      exit(thread_err);
+    }
   }
-  for (i = 0; i < file_count; ++i) {
-    pthread_join(thread[i], NULL);
+
+  pthread_mutex_lock(&cond_lock);
+  while (files_read < file_count) {
+    // find a free thread
+    for (i = 0; i < MAXTHREADS && files_read < file_count; ++i) {
+      if (thread_status[i] == T_READY) {
+	thread_arg[i].fname = paths[files_assigned++];
+	thread_status[i] = T_BUSY;
+	pthread_create(&thread[i], NULL, read_words, &thread_arg[i]);
+      }
+    }
+    pthread_cond_wait(&cond, &cond_lock);
   }
+  pthread_mutex_unlock(&cond_lock);
+
   if (clock_gettime(CLOCK_REALTIME, &endtime) != 0)
     exit(errno);
 
@@ -301,7 +348,7 @@ main(int argc, char *argv[])
     printf("inserted %d words in %Lf seconds\n", TREE->n, seconds);
 
   for (i = 0; i < file_count; ++i)
-    free(fnames[i]);
+    free(paths[i]);
   btree_destroy(TREE);
   return 0;
 }
